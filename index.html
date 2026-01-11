@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACCESS TERMINAL</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+html,body{
+  width:100%;
+  height:100%;
+}
+
+body{
+  background:black;
+  color:#00ff00;
+  font-family:"Courier New", Consolas, monospace;
+  font-weight:800;
+  font-size:16px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  text-shadow:0 0 6px #00ff00;
+}
+
+/* BACKGROUND LAYERS */
+canvas{position:fixed;inset:0;z-index:-3}
+.grid{
+  position:fixed;inset:0;
+  background:
+    linear-gradient(#00ff0015 1px, transparent 1px),
+    linear-gradient(90deg,#00ff0015 1px, transparent 1px);
+  background-size:40px 40px;
+  z-index:-2;
+}
+.scanline{
+  position:fixed;inset:0;
+  background:linear-gradient(rgba(255,255,255,.03) 1px,transparent 2px);
+  background-size:100% 4px;
+  z-index:-1;
+  pointer-events:none;
+}
+
+/* LOADING */
+#loading{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:black;z-index:999;
+}
+#loading h1{font-size:22px;margin-bottom:20px}
+.bar{width:320px;height:10px;border:1px solid #00ff00}
+.progress{height:100%;width:0;background:#00ff00;animation:load 4s linear forwards}
+@keyframes load{to{width:100%}}
+#enterBtn{
+  display:none;margin-top:25px;padding:10px 30px;
+  border:1px solid #00ff00;cursor:pointer;
+  animation:blink 1s infinite;
+}
+@keyframes blink{50%{opacity:0}}
+
+/* TERMINAL */
+.container{
+  max-width:900px;margin:40px auto;padding:25px;
+  border:2px solid #00ff00;
+  box-shadow:0 0 50px #00ff00;
+  background:rgba(0,0,0,.85);
+  display:none;
+
+  max-height:80vh;
+  overflow-y:auto;
+}
+
+.glitch{
+  font-weight:900;
+  font-size:22px;
+  animation:glitch 1.2s infinite;
+}
+@keyframes glitch{
+  0%{text-shadow:2px 0 red,-2px 0 blue}
+  50%{text-shadow:-2px 0 blue,2px 0 red}
+  100%{text-shadow:0 0 6px #00ff00}
+}
+
+hr{border:1px solid #00ff00;margin:20px 0}
+pre{white-space:pre-wrap;line-height:1.6;font-size:15px;letter-spacing:.6px}
+.cursor{animation:blink 1s infinite}
+
+/* SCROLLBAR HIJAU */
+.container::-webkit-scrollbar{width:8px}
+.container::-webkit-scrollbar-track{background:black}
+.container::-webkit-scrollbar-thumb{
+  background:#00ff00;
+  box-shadow:0 0 10px #00ff00;
+}
+.container{
+  scrollbar-width:thin;
+  scrollbar-color:#00ff00 black;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+<div class="grid"></div>
+<div class="scanline"></div>
+
+<div id="loading">
+  <h1>> INITIALIZING SYSTEM...</h1>
+  <div class="bar"><div class="progress"></div></div>
+  <div id="enterBtn">>> CLICK TO ENTER</div>
+</div>
+
+<div class="container" id="terminal">
+<h1 class="glitch">> ACCESS GRANTED_</h1>
+<hr>
+
+<pre>
+<span class="glitch">> MY INFORMATION !!!</span>
+<span id="info"></span>
+
+————————————————————————————————————————
+
+<span class="glitch">> OPTES CIRCLE !!!</span>
+<span id="optes"></span>
+
+————————————————————————————————————————
+
+<span class="glitch">> RECRUIT CIRCLE !!!</span>
+<span id="recruit"></span>
+
+————————————————————————————————————————
+
+<span class="glitch">> SET PC / LAPTOP !!!</span>
+<span id="pc"></span>
+
+————————————————————————————————————————
+
+<span class="glitch">> CONTACT !!!</span>
+<span id="contact"></span>
+
+> <span class="cursor">█</span>
+</pre>
+
+<hr>
+<p>> STATUS : ONLINE</p>
+</div>
+
+<script>
+/* FULLSCREEN */
+function goFullScreen(){
+  const el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen();
+  else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if(el.msRequestFullscreen) el.msRequestFullscreen();
+}
+
+/* ACCESS */
+setTimeout(()=>enterBtn.style.display="block",4000);
+function access(){
+  goFullScreen();
+  loading.style.display="none";
+  terminal.style.display="block";
+}
+enterBtn.onclick=access;
+document.addEventListener("keydown",e=>e.key==="Enter"&&access());
+
+/* MATRIX */
+const c=matrix,x=c.getContext("2d");
+function resize(){
+  c.width=innerWidth;
+  c.height=innerHeight;
+}
+resize();
+addEventListener("resize",resize);
+
+const l="01 HACK SYSTEM ACCESS TERMINAL",fs=14;
+let d=[];
+setInterval(()=>{
+  const col=Math.floor(c.width/fs);
+  if(d.length!==col) d=Array.from({length:col}).fill(1);
+  x.fillStyle="rgba(0,0,0,.05)";
+  x.fillRect(0,0,c.width,c.height);
+  x.fillStyle="#00ff00";
+  x.font=fs+"px monospace";
+  d.forEach((y,i)=>{
+    x.fillText(l[Math.floor(Math.random()*l.length)],i*fs,y*fs);
+    if(y*fs>c.height&&Math.random()>0.98)d[i]=0;
+    d[i]++;
+  });
+},35);
+
+/* AUTO SCROLL */
+function typeText(el,text,speed=7){
+  let i=0;
+  (function run(){
+    if(i<text.length){
+      el.textContent+=text[i++];
+      terminal.scrollTop=terminal.scrollHeight;
+      setTimeout(run,speed);
+    }
+  })();
+}
+
+typeText(info,`
+> Name     : REYZS
+> Username : reyvendozs
+> Age      : 13
+> From     : Indonesia — Pontianak
+`);
+
+typeText(optes,`
+> GPX JR / Z BLOCK / GORGON / TZY / NOCOUNTER / PARKUR JR
+
+> 11 5  ALL NETRAL
+> 11 10 PUR 1 SG
+> 11 15 PUR KAYU
+> 11 20 PUR 1 SG KAYU
+> 22 10 ALL NETRAL
+> 22 15 ALL 1 SG
+> 22 20 ALL KAYU
+> 22 25 ALL 1 SG KAYU
+
+> MINIMAL SCORE : 7 - 5
+`);
+
+typeText(recruit,`
+> PRICE   : Rp 50.000
+> BENEFIT : FULL MAIN LAGA & FT + GENDONG PARAH PALING ATAS + MAIN SAMBIL DISCORD
+`);
+
+typeText(pc,`
+> PRICE   : Rp 50.000
+> ALL ITEMS : KEYMAPPING + FFV7A + BOOST FPS + REGEDIT + TWEAKS + EMULATOR + DPI + SENSI
+`);
+
+typeText(contact,`
+> Instagram : @reyvendozs
+> Tiktok    : @reyvendozs_
+> Whatsapp  : +62 896-0570-1093
+`);
+</script>
+
+</body>
+</html>
